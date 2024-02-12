@@ -1,0 +1,10 @@
+flake8
+mccabe
+pycodestyle
+pyflakes
+pytube
+typing_extensions
+python-dotenv
+PyTelegramBotAPI
+loguru
+pyocclient

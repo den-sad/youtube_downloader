@@ -1,0 +1,86 @@
+pipeline 
+{
+    agent { 
+        node {
+            label 'local-docker'
+            }
+      }
+    stages {
+        stage('1 CleanUP') {
+             steps {
+                echo '1 CleanUP'
+                sh '''
+                    rm -rf ./youtube_downloader
+                 '''
+                echo '1 CleanUP END'
+             }
+        }
+         stage('2 GIT') {
+             steps {
+                echo '2 GIT'
+                sh '''
+                 git clone ssh://git@${GITEA}/den/youtube_downloader.git --config core.sshCommand="ssh -i /home/den/.ssh/id_rsa"
+                 '''
+                echo '2 GIT END'
+             }
+        }
+        
+        stage('3 TESTING') {
+            steps {
+                echo '3 TESTING'
+                // dir('youtube_downloader') {
+                //TODO: add test
+                // }
+                echo '3 TESTING END'
+            }
+        }  
+        stage('4 DOCKER build images') {
+            steps {
+                echo '4 DOCKER build images'
+                dir('youtube_downloader') {
+                    sh 'docker build -t ${REGISTRY}/youtube-downloader -f ./dockerfile .'
+                }
+                echo '4 DOCKER build images END'
+            }
+        }  
+        
+        stage('5 DOCKER push images') {
+            steps {
+                echo '5 DOCKER push images'
+                dir('youtube_downloader') {
+                    sh 'docker push ${REGISTRY}/youtube-downloader'
+                }
+                echo '5 DOCKER push images END'
+            }
+        }  
+
+        stage('6 DEPLOY') {
+            steps {
+                echo '6 DEPLOY}'
+                dir('youtube_downloader') {
+                    sh 'ssh -T ${DEPLOY_SERVER} -i /home/den/.ssh/id_rsa "cd Dockers/youtube_downloader && docker compose pull && docker compose down && docker compose up -d && docker image prune -f"'
+                }
+                echo '6 DEPLOY END'
+            }
+        }
+
+        stage('7 CLEAN UP') {
+            steps {
+                echo '7 CLEAN UP'
+                sh 'rm -rf ./youtube_downloader'
+                sh 'docker image prune -f'
+                echo '7 CLEAN UP'
+            }
+        }
+        
+        stage('8 INFORMING') {
+            steps {
+                echo '8 INFORMING'
+                sh '''
+                    curl "https://${GOTIFY_URL}/message?token=${GOTIFY_KEY}" -F "title=Бот youtube_downloader CI/CD" -F "message=youtube_downloader deploy complete ${BUILD_NUMBER}"
+                '''
+                echo '8 INFORMING END'
+            }
+        } 
+    }
+}

@@ -1,0 +1,4 @@
+[flake8]
+extend-ignore = E203
+exclude = .venv,.git,__pycache__,video
+max-complexity = 10

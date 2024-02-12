@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  bot:
+    container_name: youtube-downloader-debug
+    env_file: .env
+    build:
+      context: .
+      dockerfile: ./dockerfile-debug
+    volumes:
+      - ./video/:/video
+      - ./log:/var/log/
+    restart: always
+    command:
+      [
+        "sh",
+        "-c",
+        "python -m debugpy --listen 0.0.0.0:5678 app.py"
+      ]
+    ports:
+      - 5678:5678
